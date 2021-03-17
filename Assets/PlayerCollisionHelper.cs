@@ -32,7 +32,7 @@ namespace Assets
             if (hit.collider != null && hit.collider.name == "Ground")
             {
                 float distance = Mathf.Abs(hit.point.y - (player.transform.position.y - 1f));
-                if (distance <= collisionDistanceBelow)
+                if (distance < collisionDistanceBelow)
                 {
                     return true;
                 }

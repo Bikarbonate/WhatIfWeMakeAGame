@@ -8,17 +8,10 @@ using Debug = UnityEngine.Debug;
 public class playerMovement : MonoBehaviour
 {
     public Vector2 speed = new Vector2(50, 50);
-    public DashState dashState;
-    public float moveSpeed;
     public Rigidbody2D rb;
     private Vector2 playerInput;
-    public float jumpSpeed;
     public bool shouldJump;
     private SpriteRenderer spriteR;
-    public float dashForce;
-    public float dashTimer = 0;
-    public float maxDash = 20f;
-    private float characterDirection;
     public Vector2 savedVelocity;
     // Start is called before the first frame update
     [SerializeField]
@@ -26,172 +19,84 @@ public class playerMovement : MonoBehaviour
     [SerializeField]
     private Color rayColor;
     [SerializeField]
-    private PlayerState playerState;
+    private Player player;
 
     private PlayerCollisionHelper playerCollisionHelper;
 
     private void Awake()
     {
         playerCollisionHelper = new PlayerCollisionHelper();
+        spriteR = gameObject.GetComponent<SpriteRenderer>();
         rb = gameObject.GetComponent<Rigidbody2D>();
+        player = new Player(rb, playerCollisionHelper, spriteR);
     }
 
     void Start()
     {
-        spriteR = gameObject.GetComponent<SpriteRenderer>();
-        spriteR.flipX = true;
-        characterDirection = 1f;
-        dashState = DashState.READY;
-        playerState = PlayerState.GROUNDED;
     }
 
     // Update is called once per frame
     void Update()
     {
         playerInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-
-        if (playerState == PlayerState.GROUNDED && Input.GetKeyDown(KeyCode.Space))
+        if (player.playerState == PlayerState.GROUNDED && Input.GetKeyDown(KeyCode.Space))
         {
             shouldJump = true;
         }
         dashing();
-        if (!playerCollisionHelper.IsPLayerGrounded(rb) && playerState != PlayerState.WALL_GRINDING)
-        {
-            playerState = PlayerState.JUMPING;
-        }
-        else if(playerState != PlayerState.WALL_GRINDING)
-        {
-            playerState = PlayerState.GROUNDED;
-        }
     }
 
     void FixedUpdate()
     {
         // UnityEngine.Debug.Log(playerInput.y);
 
-        if (playerInput != Vector2.zero && dashState != DashState.DASHING)
+        if (playerInput != Vector2.zero && player.dashState != DashState.DASHING)
         {
-            rb.velocity = new Vector3(playerInput.x * moveSpeed, rb.velocity.y, 0);
+            player.MovePlayer(playerInput);
         }
         if (shouldJump)
         {
-            rb.AddRelativeForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
+            player.Jump();
             shouldJump = false;
         }
-        if (playerState == PlayerState.JUMPING)
+        if (player.playerState == PlayerState.JUMPING)
         {
-            Vector3 vel = rb.velocity;
-            vel.y -= 1 * Time.deltaTime;
-            rb.velocity = vel;
+            player.Jumping();
         }
 
-        if (playerCollisionHelper.WallInFrontOfMe(rb, characterDirection))
+        if (player.WallInFrontOfPlayer())
         {
-            if (dashState == DashState.DASHING)
-            {
-                rb.velocity = new Vector2(0, rb.velocity.y);
-                dashTimer = maxDash;
-                savedVelocity = new Vector2(0, 0);
-            }
-            if (playerState == PlayerState.JUMPING || playerState == PlayerState.WALL_GRINDING)
-            {
-                if (characterDirection > 0 && playerInput.x > 0)
-                {
-                    rb.gravityScale = 0;
-                    rb.velocity = new Vector2(0, 0);
-
-                    playerState = PlayerState.WALL_GRINDING;
-                }
-                else if(characterDirection < 0 && playerInput.x < 0)
-                {
-                    rb.gravityScale = 0;
-                    rb.velocity = new Vector2(0, 0);
-                    playerState = PlayerState.WALL_GRINDING;
-                }
-                else
-                {
-                    rb.gravityScale = 1;
-                }
-            }
+            player.WallCollisionResolver(playerInput);
         }
-        else if(playerState == PlayerState.WALL_GRINDING)
+        else if(player.playerState == PlayerState.WALL_GRINDING)
         {
-            rb.gravityScale = 1;
-            if (!playerCollisionHelper.IsPLayerGrounded(rb))
-            {
-                playerState = PlayerState.JUMPING;
-            }
-            else
-            {
-                playerState = PlayerState.GROUNDED;
-            }
+            player.EndingWallGrind();
         }
-
-        FlipPlayerSprite();
-    }
-
-    private void FlipPlayerSprite()
-    {
-        if (rb.velocity.x > 0.01f && !spriteR.flipX)
-        {
-            spriteR.flipX = true;
-            characterDirection = 1f;
-        }
-        if (rb.velocity.x < -0.01f && spriteR.flipX)
-        {
-            spriteR.flipX = false;
-            characterDirection = -1f;
-        }
+        player.FlipPlayerSprite();
+        player.CheckIfPLayerGrounded();
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Vector3 direction = transform.TransformDirection(new Vector3(this.characterDirection, 0)) * raySize;
+        Vector3 direction = transform.TransformDirection(new Vector3(player.characterDirection, 0)) * raySize;
         Gizmos.DrawRay(transform.position, direction);
         Gizmos.DrawRay(transform.position, Vector2.down);
     }
 
     private void dashing()
     {
-        switch (dashState)
+        switch (player.dashState)
         {
             case DashState.READY:
-                var isDashKeyDown = Input.GetKeyDown(KeyCode.LeftShift);
-                if (isDashKeyDown)
-                {
-                    savedVelocity = new Vector2(rb.velocity.x, 0);
-                    float dashVelocity;
-                    if (spriteR.flipX)
-                    {
-                        dashVelocity = 1f;
-                    }
-                    else
-                    {
-                        dashVelocity = -1f;
-                    }
-                    rb.velocity = new Vector2(dashVelocity * dashForce, 0);
-                    dashState = DashState.DASHING;
-                    rb.isKinematic = true;
-                }
+                if (Input.GetKeyDown(KeyCode.LeftShift))
+                    player.TryDash();
                 break;
             case DashState.DASHING:
-                dashTimer += Time.deltaTime * 3;
-                if (dashTimer >= maxDash)
-                {
-                    rb.isKinematic = false;
-                    dashTimer = maxDash;
-                    rb.velocity = savedVelocity;
-                    dashState = DashState.COOLDOWN;
-                }
+                player.Dashing();
                 break;
             case DashState.COOLDOWN:
-                dashTimer -= Time.deltaTime;
-                if (dashTimer <= 0)
-                {
-                    dashTimer = 0;
-                    dashState = DashState.READY;
-                }
+                player.DashCooldown();
                 break;
         }
     }
