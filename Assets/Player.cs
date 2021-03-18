@@ -14,6 +14,7 @@ namespace Assets
         private SpriteRenderer playerSprite;
         private PlayerCollisionHelper playerCollisionHelper;
         private Vector2 dashSavedVelocity;
+        private BoxCollider2D pc;
 
         [SerializeField]
         public DashState dashState;
@@ -35,7 +36,7 @@ namespace Assets
 
 
 
-        public Player(Rigidbody2D _rb ,PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite)
+        public Player(Rigidbody2D _rb ,PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider)
         {
             playerCollisionHelper = _playerCollisionHelper;
             playerSprite = _playerSprite;
@@ -44,6 +45,7 @@ namespace Assets
             playerSprite.flipX = true;
             dashState = DashState.READY;
             playerState = PlayerState.GROUNDED;
+            pc = _playerCollider;
         }
 
         public void Jump()
@@ -105,7 +107,7 @@ namespace Assets
         public void EndingWallGrind()
         {
             rb.gravityScale = 1;
-            if (!playerCollisionHelper.IsPLayerGrounded(rb))
+            if (!playerCollisionHelper.IsPLayerGrounded(rb, pc))
             {
                 playerState = PlayerState.JUMPING;
             }
@@ -117,7 +119,7 @@ namespace Assets
 
         public void CheckIfPLayerGrounded()
         {
-            if (!playerCollisionHelper.IsPLayerGrounded(rb) && playerState != PlayerState.WALL_GRINDING)
+            if (!playerCollisionHelper.IsPLayerGrounded(rb, pc) && playerState != PlayerState.WALL_GRINDING)
             {
                 playerState = PlayerState.JUMPING;
             }

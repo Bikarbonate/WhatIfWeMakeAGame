@@ -9,6 +9,7 @@ public class playerMovement : MonoBehaviour
 {
     public Vector2 speed = new Vector2(50, 50);
     public Rigidbody2D rb;
+    private BoxCollider2D bc;
     private Vector2 playerInput;
     public bool shouldJump;
     private SpriteRenderer spriteR;
@@ -28,7 +29,8 @@ public class playerMovement : MonoBehaviour
         playerCollisionHelper = new PlayerCollisionHelper();
         spriteR = gameObject.GetComponent<SpriteRenderer>();
         rb = gameObject.GetComponent<Rigidbody2D>();
-        player = new Player(rb, playerCollisionHelper, spriteR);
+        bc = gameObject.GetComponent<BoxCollider2D>();
+        player = new Player(rb, playerCollisionHelper, spriteR, bc);
     }
 
     void Start()
