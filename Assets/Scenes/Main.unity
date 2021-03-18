@@ -269,7 +269,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: {x: 50, y: 50}
-  dashState: 0
   rb: {fileID: 133230523}
   shouldJump: 0
   savedVelocity: {x: 0, y: 0}
@@ -277,12 +276,14 @@ MonoBehaviour:
   rayColor: {r: 1, g: 0.042452812, b: 0.042452812, a: 1}
   player:
     rb: {fileID: 133230523}
+    dashState: 0
     playerState: 0
     playerMoveSpeed: 10
     jumpSpeed: 40
     dashTimer: 2
     maxDashDistance: 20
     dashForce: 10
+    dashCooldown: 0
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
