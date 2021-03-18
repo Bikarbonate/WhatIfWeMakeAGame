@@ -9,27 +9,29 @@ namespace Assets
 {
     public class PlayerCollisionHelper
     {
-        private float collisionDistanceFront = 0.8f;
+        private float extraLenght = 0.4f;
         private float extraheight = 0.1f;
+        LayerMask groundMask;
+        LayerMask wallMask;
 
-        public bool WallInFrontOfMe(Rigidbody2D player, float characterDirection)
+        public PlayerCollisionHelper()
         {
-            RaycastHit2D hit = Physics2D.Raycast(player.transform.position, new Vector2(characterDirection, 0));
-            if (hit.collider != null && hit.collider.name == "Wall")
+            groundMask = LayerMask.GetMask("Ground");
+             wallMask = LayerMask.GetMask("Wall");
+        }
+        public bool WallInFrontOfMe(Rigidbody2D player, BoxCollider2D pc, float characterDirection)
+        {
+            RaycastHit2D hit = Physics2D.BoxCast(pc.bounds.center, pc.bounds.size / 2, 0f, new Vector2(characterDirection, 0), extraLenght, wallMask);
+            if (hit.collider != null)
             {
-                float distance = Mathf.Abs(hit.point.x - player.transform.position.x);
-                if (distance < collisionDistanceFront)
-                {
-                    return true;
-                }
+                return true;
             }
             return false;
         }
 
         private bool GroundBelowMe(Rigidbody2D player, BoxCollider2D pc)
         {
-            LayerMask mask = LayerMask.GetMask("Ground");
-            RaycastHit2D hit = Physics2D.BoxCast(pc.bounds.center, pc.bounds.size, 0f, Vector2.down, extraheight, mask);
+            RaycastHit2D hit = Physics2D.BoxCast(pc.bounds.center, pc.bounds.size, 0f, Vector2.down, extraheight, groundMask);
             if (hit.collider != null)
             {
                 return true;

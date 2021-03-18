@@ -82,7 +82,6 @@ public class playerMovement : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Vector3 direction = transform.TransformDirection(new Vector3(player.characterDirection, 0)) * raySize;
-        Gizmos.DrawRay(transform.position, direction);
         Gizmos.DrawRay(transform.position, Vector2.down);
     }
 

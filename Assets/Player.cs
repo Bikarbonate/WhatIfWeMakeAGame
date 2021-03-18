@@ -72,7 +72,7 @@ namespace Assets
 
         public bool WallInFrontOfPlayer()
         {
-            return playerCollisionHelper.WallInFrontOfMe(rb, characterDirection);
+            return playerCollisionHelper.WallInFrontOfMe(rb, pc, characterDirection);
         }
 
         public void WallCollisionResolver(Vector2 playerInput)
