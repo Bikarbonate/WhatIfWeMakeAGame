@@ -17,6 +17,7 @@ namespace Assets
     {
         GROUNDED = 1,
         JUMPING,
+        FALLING,
         WALL_GRINDING
     }
 }

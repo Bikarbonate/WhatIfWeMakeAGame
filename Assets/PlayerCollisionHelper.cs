@@ -19,10 +19,12 @@ namespace Assets
             groundMask = LayerMask.GetMask("Ground");
              wallMask = LayerMask.GetMask("Wall");
         }
-        public bool WallInFrontOfMe(Rigidbody2D player, BoxCollider2D pc, float characterDirection)
+        public bool GroundOrWallInFrontOfMe(Rigidbody2D player, BoxCollider2D pc, float characterDirection)
         {
-            RaycastHit2D hit = Physics2D.BoxCast(pc.bounds.center, pc.bounds.size / 2, 0f, new Vector2(characterDirection, 0), extraLenght, wallMask);
-            if (hit.collider != null)
+            RaycastHit2D hitWall = Physics2D.BoxCast(pc.bounds.center, pc.bounds.size / 2, 0f, new Vector2(characterDirection, 0), extraLenght, wallMask);
+            RaycastHit2D hitGround = Physics2D.BoxCast(pc.bounds.center, pc.bounds.size / 2, 0f, new Vector2(characterDirection, 0), extraLenght, groundMask);
+
+            if (hitWall.collider != null || hitGround.collider != null)
             {
                 return true;
             }

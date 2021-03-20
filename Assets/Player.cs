@@ -15,54 +15,63 @@ namespace Assets
         private PlayerCollisionHelper playerCollisionHelper;
         private Vector2 dashSavedVelocity;
         private BoxCollider2D pc;
-
+        PlayerDto dto;
         [SerializeField]
         public DashState dashState;
-        public float characterDirection { get; set; }
         [SerializeField]
         public PlayerState playerState;
+        public float timeCounterTemp;
         [SerializeField]
-        public float playerMoveSpeed= 10f;
-        [SerializeField]
-        public float jumpSpeed = 300f;
-        [SerializeField]
-        public float dashTimer = 0f;
-        [SerializeField]
-        public float maxDashDistance = 1.5f;
-        [SerializeField]
-        public float dashForce= 10f;
-        [SerializeField]
-        public float dashCooldown = 1f;
 
+        public float characterDirection { get; set; }
 
-
-        public Player(Rigidbody2D _rb ,PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider)
+        public Player(Rigidbody2D _rb ,PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider, PlayerDto _dto)
         {
             playerCollisionHelper = _playerCollisionHelper;
             playerSprite = _playerSprite;
             rb = _rb;
+            dto = _dto;
             characterDirection = 1f;
             playerSprite.flipX = true;
             dashState = DashState.READY;
             playerState = PlayerState.GROUNDED;
             pc = _playerCollider;
+            timeCounterTemp = dto.jumpTimeCounter;
         }
 
-        public void Jump()
+        public bool Jump()
         {
-            rb.AddRelativeForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
+            if (timeCounterTemp > 0 || timeCounterTemp > dto.minJumpTime)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, 1f * dto.jumpSpeed);
+                //rb.AddRelativeForce(Vector2.up * dto.jumpSpeed, ForceMode2D.Impulse);
+                timeCounterTemp -= Time.deltaTime;
+                if (rb.gravityScale < dto.gravityFallMax)
+                {
+                    rb.gravityScale += 0.1f;
+                }
+                return true;
+            }
+            playerState = PlayerState.FALLING;
+            return false;
         }
 
-        public void Jumping()
+        public void Falling()
         {
-            Vector3 vel = rb.velocity;
-            vel.y -= 1 * Time.deltaTime;
-            rb.velocity = vel;
+             if (rb.gravityScale < dto.gravityFallMax)
+            {
+                rb.gravityScale += 0.1f;
+            }
+        }
+
+        public void MovePlayerWhileJumping(Vector2 movement)
+        {
+            rb.velocity = new Vector3(movement.x * dto.playerMoveSpeedInAir, rb.velocity.y, 0);
         }
 
         public void MovePlayer(Vector2 movement)
         {
-            rb.velocity = new Vector3(movement.x * playerMoveSpeed, rb.velocity.y, 0);
+            rb.velocity = new Vector3(movement.x * dto.playerMoveSpeed, rb.velocity.y, 0);
         }
 
         public void WallJump()
@@ -72,7 +81,7 @@ namespace Assets
 
         public bool WallInFrontOfPlayer()
         {
-            return playerCollisionHelper.WallInFrontOfMe(rb, pc, characterDirection);
+            return playerCollisionHelper.GroundOrWallInFrontOfMe(rb, pc, characterDirection);
         }
 
         public void WallCollisionResolver(Vector2 playerInput)
@@ -82,7 +91,7 @@ namespace Assets
                 rb.velocity = new Vector2(0, rb.velocity.y);
                 dashSavedVelocity = new Vector2(0, 0);
             }
-            if (playerState == PlayerState.JUMPING || playerState == PlayerState.WALL_GRINDING)
+            if (playerState == PlayerState.JUMPING || playerState == PlayerState.WALL_GRINDING || playerState == PlayerState.FALLING)
             {
                 if (characterDirection > 0 && playerInput.x > 0)
                 {
@@ -99,33 +108,35 @@ namespace Assets
                 }
                 else
                 {
-                    rb.gravityScale = 1;
+                    rb.gravityScale = dto.gravityScale;
                 }
             }
         }
 
         public void EndingWallGrind()
         {
-            rb.gravityScale = 1;
+            rb.gravityScale = dto.gravityScale;
             if (!playerCollisionHelper.IsPLayerGrounded(rb, pc))
             {
-                playerState = PlayerState.JUMPING;
+                playerState = PlayerState.FALLING;
             }
             else
             {
-                playerState = PlayerState.GROUNDED;
+                GroundPLayer();
             }
         }
 
         public void CheckIfPLayerGrounded()
         {
-            if (!playerCollisionHelper.IsPLayerGrounded(rb, pc) && playerState != PlayerState.WALL_GRINDING)
+            if (!playerCollisionHelper.IsPLayerGrounded(rb, pc))
             {
-                playerState = PlayerState.JUMPING;
+                if (playerState != PlayerState.WALL_GRINDING && playerState != PlayerState.JUMPING)
+                    playerState = PlayerState.FALLING;
             }
-            else if (playerState != PlayerState.WALL_GRINDING)
+            else if (playerState == PlayerState.FALLING)
             {
-                playerState = PlayerState.GROUNDED;
+                GroundPLayer();
+                timeCounterTemp = dto.jumpTimeCounter;
             }
         }
 
@@ -162,30 +173,36 @@ namespace Assets
         public void StartDash()
         {
             dashSavedVelocity = new Vector2(rb.velocity.x, 0);
-            rb.velocity = new Vector2(characterDirection * dashForce, 0);
+            rb.velocity = new Vector2(characterDirection * dto.dashForce, 0);
             dashState = DashState.DASHING;
             rb.isKinematic = true;
         }
 
         public void Dashing()
         {
-            dashTimer += Time.deltaTime * 3;
-            if (dashTimer >= maxDashDistance)
+            dto.dashTimer += Time.deltaTime * 3;
+            if (dto.dashTimer >= dto.maxDashDistance)
             {
                 rb.isKinematic = false;
-                dashTimer = 0f;
+                dto.dashTimer = 0f;
                 rb.velocity = dashSavedVelocity;
                 dashState = DashState.COOLDOWN;
             }
         }
         public void DashCooldown()
         {
-            dashCooldown -= Time.deltaTime;
-            if (dashCooldown <= 0)
+            dto.dashCooldown -= Time.deltaTime;
+            if (dto.dashCooldown <= 0)
             {
-                dashCooldown = 1f;
+                dto.dashCooldown = 1f;
                 dashState = DashState.READY;
             }
+        }
+
+        private void GroundPLayer()
+        {
+            playerState = PlayerState.GROUNDED;
+            rb.gravityScale = dto.gravityScale;
         }
     }
 }

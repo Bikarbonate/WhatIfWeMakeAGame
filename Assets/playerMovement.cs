@@ -21,6 +21,10 @@ public class playerMovement : MonoBehaviour
     private Color rayColor;
     [SerializeField]
     private Player player;
+    [SerializeField]
+    private PlayerDto dto;
+    [SerializeField]
+    private float maxFallingSpeed;
 
     private PlayerCollisionHelper playerCollisionHelper;
 
@@ -30,7 +34,7 @@ public class playerMovement : MonoBehaviour
         spriteR = gameObject.GetComponent<SpriteRenderer>();
         rb = gameObject.GetComponent<Rigidbody2D>();
         bc = gameObject.GetComponent<BoxCollider2D>();
-        player = new Player(rb, playerCollisionHelper, spriteR, bc);
+        player = new Player(rb, playerCollisionHelper, spriteR, bc, dto);
     }
 
     void Start()
@@ -41,9 +45,15 @@ public class playerMovement : MonoBehaviour
     void Update()
     {
         playerInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-        if (player.playerState == PlayerState.GROUNDED && Input.GetKeyDown(KeyCode.Space))
+        if (player.playerState == PlayerState.GROUNDED && Input.GetKey(KeyCode.Space))
         {
             shouldJump = true;
+            player.playerState = PlayerState.JUMPING;
+        }
+        if (Input.GetKeyUp(KeyCode.Space) && player.playerState != PlayerState.WALL_GRINDING)
+        {
+            shouldJump = false;
+            player.playerState = PlayerState.FALLING;
         }
         dashing();
     }
@@ -52,18 +62,24 @@ public class playerMovement : MonoBehaviour
     {
         // UnityEngine.Debug.Log(playerInput.y);
 
-        if (playerInput != Vector2.zero && player.dashState != DashState.DASHING)
+        if (playerInput != Vector2.zero && player.dashState != DashState.DASHING && player.playerState == PlayerState.GROUNDED)
         {
             player.MovePlayer(playerInput);
         }
+        else if (playerInput != Vector2.zero && (player.playerState != PlayerState.FALLING || player.playerState != PlayerState.JUMPING))
+        {
+            player.MovePlayerWhileJumping(playerInput);
+        }
         if (shouldJump)
         {
-            player.Jump();
-            shouldJump = false;
+            if(!player.Jump())
+            {
+                shouldJump = false;
+            }
         }
-        if (player.playerState == PlayerState.JUMPING)
+        if (player.playerState == PlayerState.FALLING)
         {
-            player.Jumping();
+            player.Falling();
         }
 
         if (player.WallInFrontOfPlayer())
@@ -76,6 +92,8 @@ public class playerMovement : MonoBehaviour
         }
         player.FlipPlayerSprite();
         player.CheckIfPLayerGrounded();
+        if (player.rb.velocity.y > maxFallingSpeed)
+            player.rb.velocity = new Vector2(player.rb.velocity.x, maxFallingSpeed);
     }
 
     private void OnDrawGizmos()
