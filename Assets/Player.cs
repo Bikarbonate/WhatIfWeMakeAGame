@@ -22,8 +22,8 @@ namespace Assets
         public PlayerState playerState;
         public float timeCounterTemp;
         [SerializeField]
-
         public float characterDirection { get; set; }
+        private float dashForcetemp;
 
         public Player(Rigidbody2D _rb ,PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider, PlayerDto _dto)
         {
@@ -37,6 +37,7 @@ namespace Assets
             playerState = PlayerState.GROUNDED;
             pc = _playerCollider;
             timeCounterTemp = dto.jumpTimeCounter;
+            dashForcetemp = dto.dashForce;
         }
 
         public bool Jump()
@@ -58,7 +59,7 @@ namespace Assets
 
         public void Falling()
         {
-             if (rb.gravityScale < dto.gravityFallMax)
+            if (rb.gravityScale < dto.gravityFallMax)
             {
                 rb.gravityScale += 0.1f;
             }
@@ -76,7 +77,10 @@ namespace Assets
 
         public void WallJump()
         {
-
+            rb.velocity = new Vector2(characterDirection * -1, 1f * dto.jumpSpeed);
+            timeCounterTemp = dto.jumpTimeCounter;
+            playerState = PlayerState.JUMPING;
+            EndWallGrind();
         }
 
         public bool WallInFrontOfPlayer()
@@ -90,17 +94,12 @@ namespace Assets
             {
                 rb.velocity = new Vector2(0, rb.velocity.y);
                 dashSavedVelocity = new Vector2(0, 0);
+                EndDash();
             }
             if (playerState == PlayerState.JUMPING || playerState == PlayerState.WALL_GRINDING || playerState == PlayerState.FALLING)
             {
-                if (characterDirection > 0 && playerInput.x > 0)
-                {
-                    rb.gravityScale = 0;
-                    rb.velocity = new Vector2(0, 0);
-
-                    playerState = PlayerState.WALL_GRINDING;
-                }
-                else if (characterDirection < 0 && playerInput.x < 0)
+                if ((characterDirection > 0 && playerInput.x > 0) 
+                    || (characterDirection < 0 && playerInput.x < 0))
                 {
                     rb.gravityScale = 0;
                     rb.velocity = new Vector2(0, 0);
@@ -173,22 +172,41 @@ namespace Assets
         public void StartDash()
         {
             dashSavedVelocity = new Vector2(rb.velocity.x, 0);
-            rb.velocity = new Vector2(characterDirection * dto.dashForce, 0);
+            rb.gravityScale = 0;
+            rb.mass = 0;
+            rb.velocity = new Vector2(characterDirection * dashForcetemp, 0);
             dashState = DashState.DASHING;
-            rb.isKinematic = true;
         }
 
         public void Dashing()
         {
-            dto.dashTimer += Time.deltaTime * 3;
-            if (dto.dashTimer >= dto.maxDashDistance)
+            dto.dashTimer += Time.deltaTime * 2;
+            if (dto.dashTimer <= dto.maxDashDistance)
             {
-                rb.isKinematic = false;
-                dto.dashTimer = 0f;
-                rb.velocity = dashSavedVelocity;
-                dashState = DashState.COOLDOWN;
+                rb.velocity = new Vector2(characterDirection * dashForcetemp, 0);
+                dashForcetemp -= 2f;
+            }
+            else
+            {
+               rb.velocity = dashSavedVelocity;
+                EndDash();
             }
         }
+
+        public void EndDash()
+        {
+            rb.gravityScale = dto.gravityScale;
+            dto.dashTimer = 0f;
+            rb.mass = 40;
+            dashForcetemp = dto.dashForce;
+            dashState = DashState.COOLDOWN;
+        }
+
+        private void EndWallGrind()
+        {
+            rb.gravityScale = dto.gravityScale;
+        }
+
         public void DashCooldown()
         {
             dto.dashCooldown -= Time.deltaTime;

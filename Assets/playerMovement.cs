@@ -14,6 +14,7 @@ public class playerMovement : MonoBehaviour
     public bool shouldJump;
     private SpriteRenderer spriteR;
     public Vector2 savedVelocity;
+    private bool shouldWallJump = false;
     // Start is called before the first frame update
     [SerializeField]
     private float raySize;
@@ -45,11 +46,17 @@ public class playerMovement : MonoBehaviour
     void Update()
     {
         playerInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-        if (player.playerState == PlayerState.GROUNDED && Input.GetKey(KeyCode.Space))
+        if (player.playerState == PlayerState.GROUNDED && Input.GetButton("Jump"))
         {
             shouldJump = true;
             player.playerState = PlayerState.JUMPING;
         }
+        if (player.playerState == PlayerState.WALL_GRINDING && Input.GetButton("Jump"))
+        {
+            shouldWallJump = true;
+            player.playerState = PlayerState.JUMPING;
+        }
+
         if (Input.GetKeyUp(KeyCode.Space) && player.playerState != PlayerState.WALL_GRINDING)
         {
             shouldJump = false;
@@ -62,11 +69,13 @@ public class playerMovement : MonoBehaviour
     {
         // UnityEngine.Debug.Log(playerInput.y);
 
-        if (playerInput != Vector2.zero && player.dashState != DashState.DASHING && player.playerState == PlayerState.GROUNDED)
-        {
+        if (playerInput != Vector2.zero && player.dashState != DashState.DASHING 
+            && player.playerState == PlayerState.GROUNDED)        {
             player.MovePlayer(playerInput);
         }
-        else if (playerInput != Vector2.zero && (player.playerState != PlayerState.FALLING || player.playerState != PlayerState.JUMPING))
+        else if (playerInput != Vector2.zero && (player.playerState != PlayerState.FALLING
+            || player.playerState != PlayerState.JUMPING)
+            && player.dashState != DashState.DASHING)
         {
             player.MovePlayerWhileJumping(playerInput);
         }
@@ -76,6 +85,12 @@ public class playerMovement : MonoBehaviour
             {
                 shouldJump = false;
             }
+        }
+        if(shouldWallJump)
+        {
+            player.WallJump();
+            shouldWallJump = false;
+            shouldJump = true;
         }
         if (player.playerState == PlayerState.FALLING)
         {
@@ -108,7 +123,7 @@ public class playerMovement : MonoBehaviour
         switch (player.dashState)
         {
             case DashState.READY:
-                if (Input.GetKeyDown(KeyCode.LeftShift))
+                if (Input.GetButtonDown("Dash"))
                     player.TryDash();
                 break;
             case DashState.DASHING:
