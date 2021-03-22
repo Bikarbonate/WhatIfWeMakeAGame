@@ -32,6 +32,9 @@ namespace Assets
         public float minJumpTime;
         [SerializeField]
         public float gravityScale;
-
+        [SerializeField]
+        public float wallJumpTimer;
+        [SerializeField]
+        public float wallJumpForce;
     }
 }

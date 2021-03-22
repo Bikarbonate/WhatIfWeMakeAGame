@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Assets
 {
-    public enum DashState
+    public enum State
     {
         READY = 1, 
         DASHING,
@@ -18,6 +18,7 @@ namespace Assets
         GROUNDED = 1,
         JUMPING,
         FALLING,
-        WALL_GRINDING
+        WALL_GRINDING,
+        WALL_JUMPING
     }
 }

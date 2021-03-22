@@ -212,16 +212,18 @@ MonoBehaviour:
     timeCounterTemp: 0
   dto:
     playerMoveSpeed: 10
-    jumpSpeed: 25
+    jumpSpeed: 15
     dashTimer: 0
     maxDashDistance: 0.2
     dashForce: 50
     dashCooldown: 1
-    jumpTimeCounter: 0.25
+    jumpTimeCounter: 0.5
     gravityFallMax: 3
     playerMoveSpeedInAir: 7
     minJumpTime: 0.1
     gravityScale: 1
+    wallJumpTimer: 0.5
+    wallJumpForce: 2
   maxFallingSpeed: 10
 --- !u!61 &488335059
 BoxCollider2D:

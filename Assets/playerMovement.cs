@@ -26,6 +26,7 @@ public class playerMovement : MonoBehaviour
     private PlayerDto dto;
     [SerializeField]
     private float maxFallingSpeed;
+    private bool shouldKeepJumping;
 
     private PlayerCollisionHelper playerCollisionHelper;
 
@@ -45,22 +46,38 @@ public class playerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //if (Input.GetAxis("Horizontal") >  0.01f && Input.GetAxis("Vertical") > 0.01f)
         playerInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-        if (player.playerState == PlayerState.GROUNDED && Input.GetButton("Jump"))
+        if (Input.GetButton("Jump"))
         {
-            shouldJump = true;
-            player.playerState = PlayerState.JUMPING;
+            if (player.playerState == PlayerState.GROUNDED)
+            {
+                shouldJump = true; 
+                player.playerState = PlayerState.JUMPING;
+            }
+            if (player.playerState == PlayerState.JUMPING)
+            {
+               shouldKeepJumping = true;
+            }
+            if (player.playerState == PlayerState.WALL_GRINDING)
+            {
+                shouldWallJump = true;
+                player.playerState = PlayerState.JUMPING;
+            }
+            if (player.playerState == PlayerState.FALLING)
+            {
+                shouldJump = false;
+                shouldKeepJumping = false;
+            }
         }
-        if (player.playerState == PlayerState.WALL_GRINDING && Input.GetButton("Jump"))
+     
+        if (Input.GetButtonUp("Jump"))
         {
-            shouldWallJump = true;
-            player.playerState = PlayerState.JUMPING;
-        }
-
-        if (Input.GetKeyUp(KeyCode.Space) && player.playerState != PlayerState.WALL_GRINDING)
-        {
-            shouldJump = false;
-            player.playerState = PlayerState.FALLING;
+            if (player.playerState == PlayerState.JUMPING || player.playerState == PlayerState.FALLING)
+            {
+                shouldKeepJumping = false;
+                shouldWallJump = false;
+            }
         }
         dashing();
     }
@@ -69,24 +86,25 @@ public class playerMovement : MonoBehaviour
     {
         // UnityEngine.Debug.Log(playerInput.y);
 
-        if (playerInput != Vector2.zero && player.dashState != DashState.DASHING 
-            && player.playerState == PlayerState.GROUNDED)        {
+        if (playerInput != Vector2.zero && player.dashState != State.DASHING 
+            && player.playerState == PlayerState.GROUNDED)
+        {
             player.MovePlayer(playerInput);
         }
         else if (playerInput != Vector2.zero && (player.playerState != PlayerState.FALLING
             || player.playerState != PlayerState.JUMPING)
-            && player.dashState != DashState.DASHING)
+            && player.dashState != State.DASHING)
         {
             player.MovePlayerWhileJumping(playerInput);
         }
-        if (shouldJump)
+        if (shouldJump || shouldKeepJumping)
         {
-            if(!player.Jump())
+            if(!player.Jump(shouldKeepJumping))
             {
                 shouldJump = false;
             }
         }
-        if(shouldWallJump)
+        if(shouldWallJump || player.playerState == PlayerState.WALL_JUMPING)
         {
             player.WallJump();
             shouldWallJump = false;
@@ -122,14 +140,14 @@ public class playerMovement : MonoBehaviour
     {
         switch (player.dashState)
         {
-            case DashState.READY:
+            case State.READY:
                 if (Input.GetButtonDown("Dash"))
                     player.TryDash();
                 break;
-            case DashState.DASHING:
+            case State.DASHING:
                 player.Dashing();
                 break;
-            case DashState.COOLDOWN:
+            case State.COOLDOWN:
                 player.DashCooldown();
                 break;
         }

@@ -17,13 +17,14 @@ namespace Assets
         private BoxCollider2D pc;
         PlayerDto dto;
         [SerializeField]
-        public DashState dashState;
+        public State dashState;
         [SerializeField]
         public PlayerState playerState;
         public float timeCounterTemp;
         [SerializeField]
         public float characterDirection { get; set; }
         private float dashForcetemp;
+        private float wallJumpTimerTemp;
 
         public Player(Rigidbody2D _rb ,PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider, PlayerDto _dto)
         {
@@ -33,26 +34,27 @@ namespace Assets
             dto = _dto;
             characterDirection = 1f;
             playerSprite.flipX = true;
-            dashState = DashState.READY;
+            dashState = State.READY;
             playerState = PlayerState.GROUNDED;
             pc = _playerCollider;
-            timeCounterTemp = dto.jumpTimeCounter;
+            timeCounterTemp = 0f;
             dashForcetemp = dto.dashForce;
+            wallJumpTimerTemp = 0f;
         }
 
-        public bool Jump()
+        public bool Jump(bool shouldKeepJumping)
         {
-            if (timeCounterTemp > 0 || timeCounterTemp > dto.minJumpTime)
+            if (timeCounterTemp < dto.minJumpTime || (timeCounterTemp < dto.jumpTimeCounter && shouldKeepJumping))
             {
                 rb.velocity = new Vector2(rb.velocity.x, 1f * dto.jumpSpeed);
-                //rb.AddRelativeForce(Vector2.up * dto.jumpSpeed, ForceMode2D.Impulse);
-                timeCounterTemp -= Time.deltaTime;
+                timeCounterTemp += Time.deltaTime;
                 if (rb.gravityScale < dto.gravityFallMax)
                 {
                     rb.gravityScale += 0.1f;
                 }
                 return true;
             }
+            timeCounterTemp = 0f;
             playerState = PlayerState.FALLING;
             return false;
         }
@@ -77,8 +79,15 @@ namespace Assets
 
         public void WallJump()
         {
-            rb.velocity = new Vector2(characterDirection * -1, 1f * dto.jumpSpeed);
-            timeCounterTemp = dto.jumpTimeCounter;
+            if (wallJumpTimerTemp < dto.wallJumpTimer)
+            {
+                rb.velocity = new Vector2(characterDirection * -dto.wallJumpForce, 1f * dto.jumpSpeed);
+                wallJumpTimerTemp += Time.deltaTime;
+                playerState = PlayerState.WALL_JUMPING;
+                return;
+            }
+            wallJumpTimerTemp = 0f;
+            timeCounterTemp = dto.jumpTimeCounter + dto.wallJumpTimer;
             playerState = PlayerState.JUMPING;
             EndWallGrind();
         }
@@ -90,7 +99,7 @@ namespace Assets
 
         public void WallCollisionResolver(Vector2 playerInput)
         {
-            if (dashState == DashState.DASHING)
+            if (dashState == State.DASHING)
             {
                 rb.velocity = new Vector2(0, rb.velocity.y);
                 dashSavedVelocity = new Vector2(0, 0);
@@ -135,7 +144,7 @@ namespace Assets
             else if (playerState == PlayerState.FALLING)
             {
                 GroundPLayer();
-                timeCounterTemp = dto.jumpTimeCounter;
+                timeCounterTemp = 0f;
             }
         }
 
@@ -157,13 +166,13 @@ namespace Assets
         {
             switch (dashState)
             {
-                case DashState.READY:
+                case State.READY:
                     StartDash();
                     break;
-                case DashState.DASHING:
+                case State.DASHING:
                     Dashing();
                     break;
-                case DashState.COOLDOWN:
+                case State.COOLDOWN:
                     DashCooldown();
                     break;
             }
@@ -175,7 +184,7 @@ namespace Assets
             rb.gravityScale = 0;
             rb.mass = 0;
             rb.velocity = new Vector2(characterDirection * dashForcetemp, 0);
-            dashState = DashState.DASHING;
+            dashState = State.DASHING;
         }
 
         public void Dashing()
@@ -199,7 +208,7 @@ namespace Assets
             dto.dashTimer = 0f;
             rb.mass = 40;
             dashForcetemp = dto.dashForce;
-            dashState = DashState.COOLDOWN;
+            dashState = State.COOLDOWN;
         }
 
         private void EndWallGrind()
@@ -213,7 +222,7 @@ namespace Assets
             if (dto.dashCooldown <= 0)
             {
                 dto.dashCooldown = 1f;
-                dashState = DashState.READY;
+                dashState = State.READY;
             }
         }
 
