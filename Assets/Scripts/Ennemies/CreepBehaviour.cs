@@ -15,6 +15,9 @@ public class CreepBehaviour : EnemiesEntity
     {
         EnemyTakingDamage(_creepCurrentHp);
         EnemyDie(_creepCurrentHp, gameObject);
+        MovementLogic(MovementBehaviour.CREEPMOVEMENT);
     }
+
+
 
 }
