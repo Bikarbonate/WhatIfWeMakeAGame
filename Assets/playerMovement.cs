@@ -11,7 +11,7 @@ public class playerMovement : MonoBehaviour
     public Rigidbody2D rb;
     private BoxCollider2D bc;
     private Vector2 playerInput;
-    public bool shouldJump;
+    public bool startJump;
     private SpriteRenderer spriteR;
     public Vector2 savedVelocity;
     private bool shouldWallJump = false;
@@ -27,6 +27,7 @@ public class playerMovement : MonoBehaviour
     [SerializeField]
     private float maxFallingSpeed;
     private bool shouldKeepJumping;
+    private Animator animator;
 
     private PlayerCollisionHelper playerCollisionHelper;
 
@@ -36,6 +37,7 @@ public class playerMovement : MonoBehaviour
         spriteR = gameObject.GetComponent<SpriteRenderer>();
         rb = gameObject.GetComponent<Rigidbody2D>();
         bc = gameObject.GetComponent<BoxCollider2D>();
+        animator = gameObject.GetComponent<Animator>();
         player = new Player(rb, playerCollisionHelper, spriteR, bc, dto);
     }
 
@@ -45,70 +47,46 @@ public class playerMovement : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {
-        //if (Input.GetAxis("Horizontal") >  0.01f && Input.GetAxis("Vertical") > 0.01f)
+    {    
         playerInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-        if (Input.GetButton("Jump"))
-        {
-            if (player.playerState == PlayerState.GROUNDED)
-            {
-                shouldJump = true; 
-                player.playerState = PlayerState.JUMPING;
-            }
-            if (player.playerState == PlayerState.JUMPING)
-            {
-               shouldKeepJumping = true;
-            }
-            if (player.playerState == PlayerState.WALL_GRINDING)
-            {
-                shouldWallJump = true;
-                player.playerState = PlayerState.JUMPING;
-            }
-            if (player.playerState == PlayerState.FALLING)
-            {
-                shouldJump = false;
-                shouldKeepJumping = false;
-            }
-        }
-     
-        if (Input.GetButtonUp("Jump"))
-        {
-            if (player.playerState == PlayerState.JUMPING || player.playerState == PlayerState.FALLING)
-            {
-                shouldKeepJumping = false;
-                shouldWallJump = false;
-            }
-        }
-        dashing();
+        movementStateLogic();
+        dashStateLogic();
     }
 
     void FixedUpdate()
     {
         // UnityEngine.Debug.Log(playerInput.y);
 
+
         if (playerInput != Vector2.zero && player.dashState != State.DASHING 
             && player.playerState == PlayerState.GROUNDED)
         {
+            //animator.SetBool("Run", true);
             player.MovePlayer(playerInput);
         }
-        else if (playerInput != Vector2.zero && (player.playerState != PlayerState.FALLING
-            || player.playerState != PlayerState.JUMPING)
-            && player.dashState != State.DASHING)
+        else if (playerInput != Vector2.zero && (player.playerState == PlayerState.FALLING
+            || player.playerState == PlayerState.JUMPING))
         {
             player.MovePlayerWhileJumping(playerInput);
         }
-        if (shouldJump || shouldKeepJumping)
+        if (playerInput == Vector2.zero && player.playerState == PlayerState.GROUNDED)
+        {
+            player.StopPlayer();
+        }
+        if (startJump || shouldKeepJumping)
         {
             if(!player.Jump(shouldKeepJumping))
             {
-                shouldJump = false;
+                startJump = false;
             }
         }
         if(shouldWallJump || player.playerState == PlayerState.WALL_JUMPING)
         {
-            player.WallJump();
+            if (!player.WallJump())
+            {
+                startJump = true;
+            }
             shouldWallJump = false;
-            shouldJump = true;
         }
         if (player.playerState == PlayerState.FALLING)
         {
@@ -136,19 +114,72 @@ public class playerMovement : MonoBehaviour
         Gizmos.DrawRay(transform.position, Vector2.down);
     }
 
-    private void dashing()
+    private void dashStateLogic()
     {
-        switch (player.dashState)
+        if (player.playerState != PlayerState.WALL_JUMPING)
         {
-            case State.READY:
-                if (Input.GetButtonDown("Dash"))
-                    player.TryDash();
+            switch (player.dashState)
+            {
+                case State.READY:
+                    if (Input.GetButtonDown("Dash"))
+                        player.StartDash();
+                    break;
+                case State.DASHING:
+                    player.Dashing();
+                    break;
+                case State.COOLDOWN:
+                    player.DashCooldown();
+                    if (player.playerState == PlayerState.JUMPING)
+                    {
+                        shouldKeepJumping = false;
+                    }
+                    break;
+            }
+        }
+    }
+    private void movementStateLogic()
+    {
+        switch (player.playerState)
+        {
+            case PlayerState.GROUNDED:
+                if (Input.GetButtonDown("Jump"))
+                {
+                    startJump = true;
+                    player.playerState = PlayerState.JUMPING;
+                }
                 break;
-            case State.DASHING:
-                player.Dashing();
+            case PlayerState.JUMPING:
+                if (Input.GetButton("Jump"))
+                    shouldKeepJumping = true;
+                else if (Input.GetButtonUp("Jump"))
+                {
+                    shouldKeepJumping = false;
+                    shouldWallJump = false;
+                }
                 break;
-            case State.COOLDOWN:
-                player.DashCooldown();
+            case PlayerState.FALLING:
+
+                if (Input.GetButton("Jump"))
+                {
+                    startJump = false;
+                    shouldKeepJumping = false;
+                }
+                else if (Input.GetButtonUp("Jump"))
+                {
+                    shouldKeepJumping = false;
+                    shouldWallJump = false;
+                }
+                break;
+            case PlayerState.WALL_GRINDING:
+                if (Input.GetButtonDown("Jump"))
+                {
+                    shouldWallJump = true;
+                    player.playerState = PlayerState.JUMPING;
+                }
+                break;
+            case PlayerState.WALL_JUMPING:
+                break;
+            default:
                 break;
         }
     }

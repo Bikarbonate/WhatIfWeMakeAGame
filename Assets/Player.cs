@@ -77,19 +77,33 @@ namespace Assets
             rb.velocity = new Vector3(movement.x * dto.playerMoveSpeed, rb.velocity.y, 0);
         }
 
-        public void WallJump()
+        public void StopPlayer()
+        {
+            rb.velocity = new Vector3(0, 0, 0);
+            rb.angularVelocity = 0;
+        }
+
+        public bool WallJump()
         {
             if (wallJumpTimerTemp < dto.wallJumpTimer)
             {
-                rb.velocity = new Vector2(characterDirection * -dto.wallJumpForce, 1f * dto.jumpSpeed);
+                if (wallJumpTimerTemp == 0)
+                {
+                    rb.velocity = new Vector2(characterDirection * -dto.wallJumpForce, 0.5f * dto.jumpSpeed);
+                }
+                else
+                {
+                    rb.velocity = new Vector2(characterDirection * dto.wallJumpForce, 0.5f * dto.jumpSpeed);
+                }
                 wallJumpTimerTemp += Time.deltaTime;
                 playerState = PlayerState.WALL_JUMPING;
-                return;
+                return true;
             }
             wallJumpTimerTemp = 0f;
             timeCounterTemp = dto.jumpTimeCounter + dto.wallJumpTimer;
             playerState = PlayerState.JUMPING;
             EndWallGrind();
+            return false;
         }
 
         public bool WallInFrontOfPlayer()
@@ -105,7 +119,9 @@ namespace Assets
                 dashSavedVelocity = new Vector2(0, 0);
                 EndDash();
             }
-            if (playerState == PlayerState.JUMPING || playerState == PlayerState.WALL_GRINDING || playerState == PlayerState.FALLING)
+            if (playerState == PlayerState.JUMPING 
+                || playerState == PlayerState.WALL_GRINDING 
+                || playerState == PlayerState.FALLING)
             {
                 if ((characterDirection > 0 && playerInput.x > 0) 
                     || (characterDirection < 0 && playerInput.x < 0))
@@ -117,6 +133,7 @@ namespace Assets
                 else
                 {
                     rb.gravityScale = dto.gravityScale;
+                    playerState = PlayerState.FALLING;
                 }
             }
         }
@@ -138,7 +155,9 @@ namespace Assets
         {
             if (!playerCollisionHelper.IsPLayerGrounded(rb, pc))
             {
-                if (playerState != PlayerState.WALL_GRINDING && playerState != PlayerState.JUMPING)
+                if (playerState != PlayerState.WALL_GRINDING 
+                    && playerState != PlayerState.JUMPING 
+                    && playerState != PlayerState.WALL_JUMPING)
                     playerState = PlayerState.FALLING;
             }
             else if (playerState == PlayerState.FALLING)
@@ -162,22 +181,7 @@ namespace Assets
             }
         }
 
-        public void TryDash()
-        {
-            switch (dashState)
-            {
-                case State.READY:
-                    StartDash();
-                    break;
-                case State.DASHING:
-                    Dashing();
-                    break;
-                case State.COOLDOWN:
-                    DashCooldown();
-                    break;
-            }
-        }
-
+      
         public void StartDash()
         {
             dashSavedVelocity = new Vector2(rb.velocity.x, 0);

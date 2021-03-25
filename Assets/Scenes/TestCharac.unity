@@ -201,7 +201,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: {x: 50, y: 50}
   rb: {fileID: 488335060}
-  shouldJump: 0
+  startJump: 0
   savedVelocity: {x: 0, y: 0}
   raySize: 2.31
   rayColor: {r: 1, g: 0.042452812, b: 0.042452812, a: 1}
@@ -222,7 +222,7 @@ MonoBehaviour:
     playerMoveSpeedInAir: 7
     minJumpTime: 0.1
     gravityScale: 1
-    wallJumpTimer: 0.5
+    wallJumpTimer: 0.2
     wallJumpForce: 2
   maxFallingSpeed: 10
 --- !u!61 &488335059
