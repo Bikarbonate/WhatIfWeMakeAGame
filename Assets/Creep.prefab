@@ -11,7 +11,9 @@ GameObject:
   - component: {fileID: 615588106596434438}
   - component: {fileID: 615588106596434439}
   - component: {fileID: 615588106596434432}
-  m_Layer: 0
+  - component: {fileID: 1275276478902580306}
+  - component: {fileID: 2261477351234939171}
+  m_Layer: 6
   m_Name: Creep
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -100,8 +102,56 @@ MonoBehaviour:
   _speed: 5
   _distance: 5
   _groundDetection: {fileID: 3084978152456070444}
+  _enemyRb: {fileID: 1275276478902580306}
   _creepStartHp: {fileID: 11400000, guid: 0d22f7b94ad86754bbe9fac4525b1452, type: 2}
   _creepCurrentHp: {fileID: 11400000, guid: 915330e721c90d64e8daab86acc38a78, type: 2}
+--- !u!50 &1275276478902580306
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 615588106596434433}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 1
+  m_Constraints: 4
+--- !u!61 &2261477351234939171
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 615588106596434433}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
 --- !u!1 &2356130574046885494
 GameObject:
   m_ObjectHideFlags: 0
@@ -111,7 +161,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5147567853099738500}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: HitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -141,7 +191,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3084978152456070444}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: GroundDetector
   m_TagString: Untagged
   m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}

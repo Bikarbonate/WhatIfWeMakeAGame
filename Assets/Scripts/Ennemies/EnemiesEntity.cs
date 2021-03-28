@@ -8,8 +8,10 @@ public abstract class EnemiesEntity : MonoBehaviour
     [SerializeField] private float _speed;
     [SerializeField] private float _distance;
     [SerializeField] private Transform _groundDetection;
+    [SerializeField] private Rigidbody2D _enemyRb;
 
     private bool _movingRight = false;
+    private float _direction = 1;
 
     public virtual void EnemySetHP(IntVariable enemyStartHp, IntVariable enemyCurrentHp)
     {
@@ -64,20 +66,26 @@ public abstract class EnemiesEntity : MonoBehaviour
 
     private void DoCreepMovement()
     {
-        transform.Translate(Vector2.right * _speed * Time.deltaTime);
+        //transform.Translate(Vector2.right * _speed * Time.deltaTime);
 
         RaycastHit2D groundInfo = Physics2D.Raycast(_groundDetection.position, Vector2.down, _distance);
+        
+        _enemyRb.velocity = new Vector3((_direction * _speed) , _enemyRb.velocity.y);
 
-        if(!groundInfo.collider && _movingRight)
+        if (!groundInfo.collider && _movingRight)
         {
             transform.eulerAngles = new Vector3(0, -180, 0);
             _movingRight = false;
+            _direction = -1;
         }
-        else if(!groundInfo.collider && !_movingRight)
+        else if (!groundInfo.collider && !_movingRight)
         {
             transform.eulerAngles = new Vector3(0, 0, 0);
             _movingRight = true;
+            _direction = 1;
         }
+
+        
     }
 
     private void DoSkeletonMovement()
