@@ -6,6 +6,7 @@ public class CreepBehaviour : EnemiesEntity
 {
     [SerializeField] IntVariable _creepStartHp;
     [SerializeField] IntVariable _creepCurrentHp;
+
     private void Awake()
     {
         EnemySetHP(_creepStartHp, _creepCurrentHp);                

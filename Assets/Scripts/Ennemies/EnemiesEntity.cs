@@ -5,6 +5,12 @@ using UnityEngine;
 
 public abstract class EnemiesEntity : MonoBehaviour
 {
+    [SerializeField] private float _speed;
+    [SerializeField] private float _distance;
+    [SerializeField] private Transform _groundDetection;
+
+    private bool _movingRight = false;
+
     public virtual void EnemySetHP(IntVariable enemyStartHp, IntVariable enemyCurrentHp)
     {
         enemyCurrentHp._value = enemyStartHp._value;
@@ -31,6 +37,11 @@ public abstract class EnemiesEntity : MonoBehaviour
         }
     }
 
+    public virtual void DetectPlayer()
+    {
+
+    }
+
     public enum MovementBehaviour
     {
         CREEPMOVEMENT,
@@ -53,11 +64,31 @@ public abstract class EnemiesEntity : MonoBehaviour
 
     private void DoCreepMovement()
     {
+        transform.Translate(Vector2.right * _speed * Time.deltaTime);
 
+        RaycastHit2D groundInfo = Physics2D.Raycast(_groundDetection.position, Vector2.down, _distance);
+
+        if(!groundInfo.collider && _movingRight)
+        {
+            transform.eulerAngles = new Vector3(0, -180, 0);
+            _movingRight = false;
+        }
+        else if(!groundInfo.collider && !_movingRight)
+        {
+            transform.eulerAngles = new Vector3(0, 0, 0);
+            _movingRight = true;
+        }
     }
 
     private void DoSkeletonMovement()
     {
 
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+
+        Gizmos.DrawRay(_groundDetection.position, Vector2.down * _distance);
     }
 }
