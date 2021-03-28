@@ -1,9 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Assets;
+﻿using Assets;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 public class playerMovement : MonoBehaviour
 {
@@ -27,7 +23,6 @@ public class playerMovement : MonoBehaviour
     [SerializeField]
     private float maxFallingSpeed;
     private bool shouldKeepJumping;
-    private Animator animator;
 
     private PlayerCollisionHelper playerCollisionHelper;
 
@@ -37,7 +32,6 @@ public class playerMovement : MonoBehaviour
         spriteR = gameObject.GetComponent<SpriteRenderer>();
         rb = gameObject.GetComponent<Rigidbody2D>();
         bc = gameObject.GetComponent<BoxCollider2D>();
-        animator = gameObject.GetComponent<Animator>();
         player = new Player(rb, playerCollisionHelper, spriteR, bc, dto);
     }
 
@@ -47,7 +41,7 @@ public class playerMovement : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {    
+    {
         playerInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
         movementStateLogic();
         dashStateLogic();
@@ -55,10 +49,9 @@ public class playerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // UnityEngine.Debug.Log(playerInput.y);
 
 
-        if (playerInput != Vector2.zero && player.dashState != State.DASHING 
+        if (playerInput != Vector2.zero && player.dashState != State.DASHING
             && player.playerState == PlayerState.GROUNDED)
         {
             //animator.SetBool("Run", true);
@@ -75,12 +68,12 @@ public class playerMovement : MonoBehaviour
         }
         if (startJump || shouldKeepJumping)
         {
-            if(!player.Jump(shouldKeepJumping))
+            if (!player.Jump(shouldKeepJumping))
             {
                 startJump = false;
             }
         }
-        if(shouldWallJump || player.playerState == PlayerState.WALL_JUMPING)
+        if (shouldWallJump || player.playerState == PlayerState.WALL_JUMPING)
         {
             if (!player.WallJump())
             {
@@ -97,7 +90,7 @@ public class playerMovement : MonoBehaviour
         {
             player.WallCollisionResolver(playerInput);
         }
-        else if(player.playerState == PlayerState.WALL_GRINDING)
+        else if (player.playerState == PlayerState.WALL_GRINDING)
         {
             player.EndingWallGrind();
         }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets
 {
@@ -17,7 +12,7 @@ namespace Assets
         public PlayerCollisionHelper()
         {
             groundMask = LayerMask.GetMask("Ground");
-             wallMask = LayerMask.GetMask("Wall");
+            wallMask = LayerMask.GetMask("Wall");
         }
         public bool GroundOrWallInFrontOfMe(Rigidbody2D player, BoxCollider2D pc, float characterDirection)
         {

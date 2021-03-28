@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Assets
+﻿namespace Assets
 {
     public enum State
     {
-        READY = 1, 
+        READY = 1,
         DASHING,
         COOLDOWN
     }

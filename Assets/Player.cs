@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Assets
@@ -26,7 +22,7 @@ namespace Assets
         private float dashForcetemp;
         private float wallJumpTimerTemp;
 
-        public Player(Rigidbody2D _rb ,PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider, PlayerDto _dto)
+        public Player(Rigidbody2D _rb, PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider, PlayerDto _dto)
         {
             playerCollisionHelper = _playerCollisionHelper;
             playerSprite = _playerSprite;
@@ -119,11 +115,11 @@ namespace Assets
                 dashSavedVelocity = new Vector2(0, 0);
                 EndDash();
             }
-            if (playerState == PlayerState.JUMPING 
-                || playerState == PlayerState.WALL_GRINDING 
+            if (playerState == PlayerState.JUMPING
+                || playerState == PlayerState.WALL_GRINDING
                 || playerState == PlayerState.FALLING)
             {
-                if ((characterDirection > 0 && playerInput.x > 0) 
+                if ((characterDirection > 0 && playerInput.x > 0)
                     || (characterDirection < 0 && playerInput.x < 0))
                 {
                     rb.gravityScale = 0;
@@ -155,8 +151,8 @@ namespace Assets
         {
             if (!playerCollisionHelper.IsPLayerGrounded(rb, pc))
             {
-                if (playerState != PlayerState.WALL_GRINDING 
-                    && playerState != PlayerState.JUMPING 
+                if (playerState != PlayerState.WALL_GRINDING
+                    && playerState != PlayerState.JUMPING
                     && playerState != PlayerState.WALL_JUMPING)
                     playerState = PlayerState.FALLING;
             }
@@ -181,7 +177,7 @@ namespace Assets
             }
         }
 
-      
+
         public void StartDash()
         {
             dashSavedVelocity = new Vector2(rb.velocity.x, 0);
@@ -201,7 +197,7 @@ namespace Assets
             }
             else
             {
-               rb.velocity = dashSavedVelocity;
+                rb.velocity = dashSavedVelocity;
                 EndDash();
             }
         }
