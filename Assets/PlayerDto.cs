@@ -31,6 +31,18 @@ namespace Assets
         [SerializeField]
         public float wallJumpTimer;
         [SerializeField]
-        public float wallJumpForce;
+        public Vector2 wallJumpClimb;
+        [SerializeField]
+        public float wallJumpClimbTimer;
+        [SerializeField]
+        public Vector2 wallJumpOff;
+        [SerializeField]
+        public float wallJumpLeapTimerOff;
+        [SerializeField]
+        public Vector2 wallJumpLeap;
+        [SerializeField]
+        public float wallJumpLeapTimer;
+        [SerializeField]
+        public float wallSlideSpeedMax;
     }
 }

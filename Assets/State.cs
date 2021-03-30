@@ -3,9 +3,17 @@
     public enum State
     {
         READY = 1,
+        COOLDOWN,
         DASHING,
-        COOLDOWN
     }
+
+    public enum WallJumpState
+    {
+        JUMPOFF = 1,
+        JUMPLEAP,
+        JUMPCLIMB
+    }
+
 
     public enum PlayerState
     {
@@ -13,6 +21,8 @@
         JUMPING,
         FALLING,
         WALL_GRINDING,
-        WALL_JUMPING
+        WALL_JUMPING,
+        WALL_SLIDING,
+        DASHING
     }
 }

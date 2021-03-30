@@ -49,12 +49,12 @@ public class playerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-
-
-        if (playerInput != Vector2.zero && player.dashState != State.DASHING
-            && player.playerState == PlayerState.GROUNDED)
+        if (player.playerState == PlayerState.DASHING)
         {
-            //animator.SetBool("Run", true);
+            return;
+        }
+        if (playerInput != Vector2.zero && player.playerState == PlayerState.GROUNDED)
+        {
             player.MovePlayer(playerInput);
         }
         else if (playerInput != Vector2.zero && (player.playerState == PlayerState.FALLING
@@ -62,7 +62,8 @@ public class playerMovement : MonoBehaviour
         {
             player.MovePlayerWhileJumping(playerInput);
         }
-        if (playerInput == Vector2.zero && player.playerState == PlayerState.GROUNDED)
+        if (playerInput == Vector2.zero
+            && player.playerState == PlayerState.GROUNDED)
         {
             player.StopPlayer();
         }
@@ -71,15 +72,18 @@ public class playerMovement : MonoBehaviour
             if (!player.Jump(shouldKeepJumping))
             {
                 startJump = false;
+                shouldKeepJumping = false;
             }
+
         }
-        if (shouldWallJump || player.playerState == PlayerState.WALL_JUMPING)
+        if (shouldWallJump)
         {
-            if (!player.WallJump())
-            {
-                startJump = true;
-            }
+            player.StartWallJump(playerInput);
             shouldWallJump = false;
+        }
+        if (player.playerState == PlayerState.WALL_JUMPING)
+        {
+            StartCoroutine(player.WallJumpRoutine());
         }
         if (player.playerState == PlayerState.FALLING)
         {
@@ -144,7 +148,7 @@ public class playerMovement : MonoBehaviour
             case PlayerState.JUMPING:
                 if (Input.GetButton("Jump"))
                     shouldKeepJumping = true;
-                else if (Input.GetButtonUp("Jump"))
+                if (Input.GetButtonUp("Jump"))
                 {
                     shouldKeepJumping = false;
                     shouldWallJump = false;
@@ -164,6 +168,7 @@ public class playerMovement : MonoBehaviour
                 }
                 break;
             case PlayerState.WALL_GRINDING:
+            case PlayerState.WALL_SLIDING:
                 if (Input.GetButtonDown("Jump"))
                 {
                     shouldWallJump = true;

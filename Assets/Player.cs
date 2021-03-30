@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Assets
@@ -21,6 +22,11 @@ namespace Assets
         public float characterDirection { get; set; }
         private float dashForcetemp;
         private float wallJumpTimerTemp;
+        private PlayerState savedState;
+        private float wallDirection;
+        private Vector2 wallJumpVelocity;
+        private float wallJumpTimer;
+
 
         public Player(Rigidbody2D _rb, PlayerCollisionHelper _playerCollisionHelper, SpriteRenderer _playerSprite, BoxCollider2D _playerCollider, PlayerDto _dto)
         {
@@ -79,32 +85,37 @@ namespace Assets
             rb.angularVelocity = 0;
         }
 
-        public bool WallJump()
+        public void StartWallJump(Vector2 playerInput)
         {
-            if (wallJumpTimerTemp < dto.wallJumpTimer)
+            if (playerInput.x == wallDirection)
             {
-                if (wallJumpTimerTemp == 0)
-                {
-                    rb.velocity = new Vector2(characterDirection * -dto.wallJumpForce, 0.5f * dto.jumpSpeed);
-                }
-                else
-                {
-                    rb.velocity = new Vector2(characterDirection * dto.wallJumpForce, 0.5f * dto.jumpSpeed);
-                }
-                wallJumpTimerTemp += Time.deltaTime;
-                playerState = PlayerState.WALL_JUMPING;
-                return true;
+                wallJumpVelocity = new Vector2(wallDirection * -dto.wallJumpClimb.x, dto.wallJumpClimb.y);
+                wallJumpTimer = dto.wallJumpClimbTimer;
+
             }
-            wallJumpTimerTemp = 0f;
-            timeCounterTemp = dto.jumpTimeCounter + dto.wallJumpTimer;
-            playerState = PlayerState.JUMPING;
-            EndWallGrind();
-            return false;
+            else if (playerInput.x == 0)
+            {
+                wallJumpVelocity = new Vector2(wallDirection * -dto.wallJumpOff.x, dto.wallJumpOff.y);
+                wallJumpTimer = dto.wallJumpLeapTimerOff;
+
+            }
+            else
+            {
+                wallJumpVelocity = new Vector2(wallDirection * -dto.wallJumpLeap.x, dto.wallJumpLeap.y);
+                wallJumpTimer = dto.wallJumpLeapTimer;
+            }
+            playerState = PlayerState.WALL_JUMPING;
         }
 
         public bool WallInFrontOfPlayer()
         {
-            return playerCollisionHelper.GroundOrWallInFrontOfMe(rb, pc, characterDirection);
+            if (playerCollisionHelper.GroundOrWallInFrontOfMe(rb, pc, characterDirection))
+            {
+                wallDirection = characterDirection;
+                return true;
+            }
+            wallDirection = 0f;
+            return false;
         }
 
         public void WallCollisionResolver(Vector2 playerInput)
@@ -115,9 +126,11 @@ namespace Assets
                 dashSavedVelocity = new Vector2(0, 0);
                 EndDash();
             }
+
             if (playerState == PlayerState.JUMPING
                 || playerState == PlayerState.WALL_GRINDING
-                || playerState == PlayerState.FALLING)
+                || playerState == PlayerState.FALLING
+                || playerState == PlayerState.WALL_SLIDING)
             {
                 if ((characterDirection > 0 && playerInput.x > 0)
                     || (characterDirection < 0 && playerInput.x < 0))
@@ -129,7 +142,9 @@ namespace Assets
                 else
                 {
                     rb.gravityScale = dto.gravityScale;
-                    playerState = PlayerState.FALLING;
+                    if (rb.velocity.y > dto.wallSlideSpeedMax)
+                        rb.velocity = new Vector2(rb.velocity.x, dto.wallSlideSpeedMax);
+                    playerState = PlayerState.WALL_SLIDING;
                 }
             }
         }
@@ -153,10 +168,11 @@ namespace Assets
             {
                 if (playerState != PlayerState.WALL_GRINDING
                     && playerState != PlayerState.JUMPING
-                    && playerState != PlayerState.WALL_JUMPING)
+                    && playerState != PlayerState.WALL_JUMPING
+                    && playerState != PlayerState.WALL_SLIDING)
                     playerState = PlayerState.FALLING;
             }
-            else if (playerState == PlayerState.FALLING)
+            else if (playerState != PlayerState.JUMPING)
             {
                 GroundPLayer();
                 timeCounterTemp = 0f;
@@ -184,6 +200,8 @@ namespace Assets
             rb.gravityScale = 0;
             rb.mass = 0;
             rb.velocity = new Vector2(characterDirection * dashForcetemp, 0);
+            savedState = playerState;
+            playerState = PlayerState.DASHING;
             dashState = State.DASHING;
         }
 
@@ -192,6 +210,7 @@ namespace Assets
             dto.dashTimer += Time.deltaTime * 2;
             if (dto.dashTimer <= dto.maxDashDistance)
             {
+                playerState = PlayerState.DASHING;
                 rb.velocity = new Vector2(characterDirection * dashForcetemp, 0);
                 dashForcetemp -= 2f;
             }
@@ -209,11 +228,7 @@ namespace Assets
             rb.mass = 40;
             dashForcetemp = dto.dashForce;
             dashState = State.COOLDOWN;
-        }
-
-        private void EndWallGrind()
-        {
-            rb.gravityScale = dto.gravityScale;
+            playerState = savedState;
         }
 
         public void DashCooldown()
@@ -230,6 +245,25 @@ namespace Assets
         {
             playerState = PlayerState.GROUNDED;
             rb.gravityScale = dto.gravityScale;
+        }
+
+
+        public IEnumerator WallJumpRoutine()
+        {
+            if (wallJumpTimerTemp < wallJumpTimer)
+            {
+                rb.velocity = wallJumpVelocity;
+                wallJumpTimerTemp += Time.deltaTime;
+                playerState = PlayerState.WALL_JUMPING;
+                if (rb.gravityScale < dto.gravityFallMax)
+                {
+                    rb.gravityScale += 0.1f;
+                }
+                yield return null;
+            }
+            playerState = PlayerState.JUMPING;
+            wallJumpTimerTemp = 0f;
+            yield return null;
         }
     }
 }
